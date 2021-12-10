@@ -3,7 +3,7 @@
 
 # SETUP:
 Import db2 (1).sql into PHPmyadmin to create the structure for the database.
-Change ConnectLogin.php to have person data entries filled. Ensure database, username, password, sqlport, and socket are all set up to your personal information.
+Change ConnectLogin.php to have personal data entries filled. Ensure database, username, password, sqlport, and socket are all set up to your personal information. If you are on the university server, this infromation can be found in the includes folder in the file "dbconn.php"
 
 Connect to your data by visiting your specified address or localhost if one is not set.
 
