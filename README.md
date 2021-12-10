@@ -1,5 +1,5 @@
 # cs360
- This project was created by Samuel Frederickson, Zackary Hale, Chase Gornick.
+ This project was created by Samuel Frederickson, Zachary Hale, Chase Gornick.
  It was constructed on the UIDAHO University Server provided by Instructor Hasan, Jamil.
 
 # SETUP:
