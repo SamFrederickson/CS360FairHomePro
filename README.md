@@ -1,5 +1,6 @@
 # cs360
  This project was created by Samuel Frederickson, Zackary Hale, Chase Gornick.
+ It was constructed on the UIDAHO University Server provided by Instructor Hasan, Jamil.
 
 # SETUP:
 Import db2 (1).sql into PHPmyadmin to create the structure for the database.
