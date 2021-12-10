@@ -28,34 +28,21 @@ if (isset($_SESSION['id']))
       <td>Buisness</td>
       <td>Contact Information</td>
       <td>Service Area</td>
+	  <td>Service</td>
+	  <td>Quote</td>
+	  <td>Status</td>
       </tr>
 <?php
 if ($_SERVER["REQUEST_METHOD"] == "POST"){
 if(empty($_POST["contractid"])){
 if (empty($_POST["confirmation"])){
-$sql = "SELECT Cost, PerWhat, PriceID FROM PricingQuotes WHERE ServiceName='" . $_POST["servicename"] . 
-"' AND BusinessName='" . $_POST["businessname"] . "'";
-$servicename = $_POST["servicename"];
-$result = $db->query($sql);
-$service = $result->fetch_assoc();
-$businessname = $_POST["businessname"];
-$PriceID = $service["PriceID"];
-$cost = $service["Cost"];
-$perwhat = $service["PerWhat"];
-$sql = mysqli_query($db, "SELECT * FROM `Owners` WHERE AccountID = $id");
-$data = mysqli_fetch_assoc($sql);
-$homenumber = $data["HomeNumber"];
-$sql = "SELECT " . $perwhat . " FROM HomeDetails WHERE HomeNumber=" . $homenumber;
-$result = $db->query($sql);
-$data = $result->fetch_assoc();
-$quote = $cost * $data[$perwhat];
-echo "Quote: " . $quote . "\n";
+
 echo "<form action=services.php method=post>" .
 "<input type=\"hidden\" name=\"confirmation\" value=\"Confirmed\">" . 
-"<input type=\"hidden\" name=\"priceid\" value=\"". $PriceID . "\">" .
-"<input type=\"hidden\" name=\"businessname\" value=\"". $businessname . "\">".
-"<input type=\"hidden\" name=\"cost\" value=\"". $quote . "\">".
-"<input type=\"hidden\" name=\"homenumber\" value=\"". $homenumber . "\">".
+"<input type=\"hidden\" name=\"priceid\" value=\"". $_POST["priceid"] . "\">" .
+"<input type=\"hidden\" name=\"businessname\" value=\"". $_POST["businessname"] . "\">".
+"<input type=\"hidden\" name=\"cost\" value=\"". $_POST["quote"] . "\">".
+"<input type=\"hidden\" name=\"homenumber\" value=\"". $_POST["homenumber"] . "\">".
 "<input type=\"submit\" value=\"Confirm Contract\">" 
 . "</form>";
 } else {
@@ -74,47 +61,100 @@ $db->query($sql);
 	$db->query($sql);
 }
 }
-$sql = "SELECT * FROM ServiceProviders";
-$result = $db->query($sql);
-$servget = "";
-if ($result->num_rows > 0) {
+$servget = "SELECT ServiceName, BusinessName, PriceID FROM PricingQuotes";
+$res = $db->query($servget);
+if ($res->num_rows > 0) {
     // output data of each row
-    while($row = $result->fetch_assoc()) {
-	echo "<tr>";
-	echo "<td>". $row["BusinessName"] ;
-	echo "<td>". $row["ContactInformation"] ;    
-	echo "<td>". $row["ServiceArea"] ;
+    while($row = $res->fetch_assoc()) {
+	$sql = "SELECT * FROM ServiceProviders WHERE BusinessName='" . $row["BusinessName"] . "'";
+	$result = $db->query($sql);
 	$sqlA = "SELECT * FROM Owners WHERE AccountID=" . $_SESSION['id'];
 	$resA = $db->query($sqlA);
 	$rowA = $resA->fetch_assoc();
-	$sqlB = "SELECT * FROM Contracts WHERE HomeNumber='" . $rowA["HomeNumber"] . "' AND BusinessName='" . $row["BusinessName"] . "'";
+	$sqlB = "SELECT * FROM Contracts WHERE HomeNumber='" . $rowA["HomeNumber"] . "' AND BusinessName='" . $row["BusinessName"] . "' AND PriceID=" . $row["PriceID"];
 	$resB = $db->query($sqlB);
+	if($result->num_rows > 0){
+	while($rows = $result->fetch_assoc()){
+		$sql = "SELECT Cost, PerWhat, PriceID FROM PricingQuotes WHERE ServiceName='" . $row["ServiceName"] . 
+		"' AND BusinessName='" . $row["BusinessName"] . "'";
+		$result = $db->query($sql);
+		$service = $result->fetch_assoc();
+		$PriceID = $service["PriceID"];
+		$cost = $service["Cost"];
+		$perwhat = $service["PerWhat"];
+		$sql = mysqli_query($db, "SELECT * FROM `Owners` WHERE AccountID = $id");
+		$data = mysqli_fetch_assoc($sql);
+		$homenumber = $data["HomeNumber"];
+		$sql = "SELECT " . $perwhat . " FROM HomeDetails WHERE HomeNumber=" . $homenumber;
+		$result = $db->query($sql);
+		$data = $result->fetch_assoc();
+		$quote = $cost * $data[$perwhat];
+		
+		
+		if($resB->num_rows > 0){
+			$rowB = $resB->fetch_assoc();
 	
-    $servget = "SELECT ServiceName FROM PricingQuotes WHERE BusinessName='" . $row["BusinessName"] . "'";
-	$res = $db->query($servget);
-	if($res->num_rows > 0){
-	while($rows = $res->fetch_assoc()){
-	if($resB->num_rows > 0){
-	$rowB = $resB->fetch_assoc();
-	if($rowB["Accepted"] == 0){
-		echo "<td> pending";
-	} else if($rowB["Accepted"] == 1){
-		echo "<td> accepted";
-	} else {
-		echo "<td> Rejected";
-		echo "<td>" . "<form action=services.php method=post>" .
-		"<input type=\"hidden\" name=\"contractid\" value=\"". $rowB["ContractID"]."\">".
-		"<input type=\"hidden\" name=\"contractStatus\" value=\"delete\">".
-		"<input type=\"submit\" value=\"ok\">" 
-		. "</form>";
-	}
+		if($rowB["Accepted"] == 0 AND $rowB["PriceID"] == $row["PriceID"] ){
+			echo "<tr>";
+			echo "<td>". $row["BusinessName"] ;
+			echo "<td>". $rows["ContactInformation"] ;    
+			echo "<td>". $rows["ServiceArea"];
+			echo "<td>". $row["ServiceName"];
+			echo "<td>". $quote;
+			echo "<td> pending";
+		} else if($rowB["Accepted"] == 1 AND $rowB["PriceID"] == $row["PriceID"]){
+			echo "<tr>";
+			echo "<td>". $row["BusinessName"] ;
+			echo "<td>". $rows["ContactInformation"] ;    
+			echo "<td>". $rows["ServiceArea"] ;
+			echo "<td>". $row["ServiceName"];
+			echo "<td>". $quote;
+			echo "<td> accepted";
+		} else if($rowB["PriceID"] == $row["PriceID"]){
+			echo "<tr>";
+			echo "<td>". $row["BusinessName"] ;
+			echo "<td>". $rows["ContactInformation"] ;    
+			echo "<td>". $rows["ServiceArea"] ;
+			echo "<td>". $row["ServiceName"];
+			echo "<td>". $quote;
+			echo "<td> Rejected";
+			echo "<td>" . "<form action=services.php method=post>" .
+			"<input type=\"hidden\" name=\"contractid\" value=\"". $rowB["ContractID"]."\">".
+			"<input type=\"hidden\" name=\"contractStatus\" value=\"delete\">".
+			"<input type=\"submit\" value=\"ok\">" 
+			. "</form>";
+		} else {
+			echo "<tr>";
+			echo "<td>". $row["BusinessName"] ;
+			echo "<td>". $rows["ContactInformation"] ;    
+			echo "<td>". $rows["ServiceArea"] ;
+			echo "<td>" . "<form action=services.php method=post>" .
+			"<input type=\"hidden\" name=\"quote\" value=\"". $quote . "\">" .
+			"<input type=\"hidden\" name=\"homenumber\" value=\"". $homenumber . "\">".
+			"<input type=\"hidden\" name=\"priceid\" value=\"". $row["PriceID"] . "\">" .
+			"<input type=\"hidden\" name=\"servicename\" value=\"". $row["ServiceName"] . "\">" .
+			"<input type=\"hidden\" name=\"businessname\" value=\"". $row["BusinessName"] . "\">".
+			"<input type=\"submit\" value=\"". $row["ServiceName"] . "\">" 
+			. "</form>";
+			echo "<td>". $quote;
+			echo "<td> Unrequested";
+		}
 	}
 	else {
+		echo "<tr>";
+		echo "<td>". $row["BusinessName"] ;
+		echo "<td>". $rows["ContactInformation"] ;    
+		echo "<td>". $rows["ServiceArea"] ;
 		echo "<td>" . "<form action=services.php method=post>" .
-		"<input type=\"hidden\" name=\"servicename\" value=\"". $rows["ServiceName"] . "\">" .
+		"<input type=\"hidden\" name=\"quote\" value=\"". $quote . "\">" .
+		"<input type=\"hidden\" name=\"homenumber\" value=\"". $homenumber . "\">".
+		"<input type=\"hidden\" name=\"priceid\" value=\"". $row["PriceID"] . "\">" .
+		"<input type=\"hidden\" name=\"servicename\" value=\"". $row["ServiceName"] . "\">" .
 		"<input type=\"hidden\" name=\"businessname\" value=\"". $row["BusinessName"] . "\">".
-		"<input type=\"submit\" value=\"". $rows["ServiceName"] . "\">" 
+		"<input type=\"submit\" value=\"". $row["ServiceName"] . "\">" 
 		. "</form>";
+		echo "<td>". $quote;
+		echo "<td> Unrequested";
 	}
 	}	
 	}
